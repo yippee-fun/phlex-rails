@@ -2,6 +2,8 @@
 
 module Phlex::Generators
 	class InstallGenerator < ::Rails::Generators::Base
+		class_option :use_literal_gem, type: :boolean, default: true,
+			desc: "include `extend Literal::Properties` in Components::Base (recommended)"
 		source_root File.expand_path("templates", __dir__)
 
 		def create_initializer
