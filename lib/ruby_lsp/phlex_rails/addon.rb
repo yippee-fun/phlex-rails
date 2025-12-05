@@ -31,7 +31,7 @@ module RubyLsp
 				return unless name in :register_output_helper | :register_value_helper
 
 				case arguments
-				in [Prism::SymbolNode[unescaped: String => method_name], *]
+				in [*, Prism::SymbolNode[unescaped: String => method_name], *]
 					@listener.add_method(method_name, location, [
 						RubyIndexer::Entry::Signature.new([
 							RubyIndexer::Entry::ForwardingParameter.new,
