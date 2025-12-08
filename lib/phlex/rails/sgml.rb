@@ -21,7 +21,10 @@ module Phlex::Rails::SGML
 			# otherwise re-raise the original error.
 			if module_name
 				raise NoMethodError.new(<<~MESSAGE)
-					Try including `Phlex::Rails::Helpers::#{module_name}` in #{self.class.name}.
+					Try including `Phlex::Rails::Helpers::#{module_name}` in #{self.class.name}, like so:
+					```ruby
+					include Phlex::Rails::Helpers::#{module_name}
+					```
 				MESSAGE
 			else
 				raise e
