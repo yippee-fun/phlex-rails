@@ -6,6 +6,15 @@ module Phlex
 	module Rails
 		class HelpersCalledBeforeRenderError < StandardError; end
 
+		# Pre-define Streaming with ActionController::Live included BEFORE Zeitwerk eager loads.
+		# ActionController::Live uses class_attribute which can fail during eager loading
+		# if ActiveSupport isn't fully initialized yet.
+		# See: https://github.com/phlex-ruby/phlex-rails/issues/323
+		module Streaming
+			extend ActiveSupport::Concern
+			include ActionController::Live
+		end
+
 		Loader = Zeitwerk::Loader.for_gem_extension(Phlex).tap do |loader|
 			loader.ignore("#{__dir__}/ruby_lsp")
 
