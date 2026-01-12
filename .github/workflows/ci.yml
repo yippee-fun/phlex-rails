@@ -23,7 +23,7 @@ jobs:
           rubygems: latest
 
       - name: Install dependencies
-        run: bundle install --jobs 4 --without development
+        run: bundle config set --local without development && bundle install --jobs 4
 
       - name: Appraisals install
         run: bundle exec appraisal install --jobs 4
