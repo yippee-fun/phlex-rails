@@ -30,7 +30,7 @@ test "form_with" do
 
 	assert_equivalent_html output, <<~HTML
 		<form action="/" accept-charset="UTF-8" method="post">
-			<input name="utf8" type="hidden" value="✓" autocomplete="off">
+			<input type="hidden" name="utf8" value="✓" autocomplete="off">
 			<input type="hidden" name="authenticity_token" value="(example form authenticity token)" autocomplete="off">
 			<input type="text" name="bar">
 			<button name="button" type="submit">Submit</button>
@@ -69,7 +69,7 @@ test "form_with with custom builder" do
 
 	assert_equivalent_html output, <<~HTML
 		<form action="/" accept-charset="UTF-8" method="post">
-			<input name="utf8" type="hidden" value="✓" autocomplete="off">
+			<input type="hidden" name="utf8" value="✓" autocomplete="off">
 			<input type="hidden" name="authenticity_token" value="(example form authenticity token)" autocomplete="off">
 			<div class="fancy-input">Fancy input for bar</div>
 		</form>

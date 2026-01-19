@@ -58,7 +58,7 @@ test "options_for_select in a form with select" do
 
 	assert_equivalent_html output, <<~HTML
 		<form action="/" accept-charset="UTF-8" method="post">
-			<input name="utf8" type="hidden" value="✓" autocomplete="off">
+			<input type="hidden" name="utf8" value="✓" autocomplete="off">
 			<input type="hidden" name="authenticity_token" value="(example form authenticity token)" autocomplete="off">
 			<select name="test">
 				<option value="1">Option 1</option>

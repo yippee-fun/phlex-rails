@@ -50,6 +50,27 @@ class Quickdraw::Test
 			**headers.transform_keys { |key| "HTTP_#{key.to_s.upcase.tr('-', '_')}" }
 		)
 	end
+
+	# Normalize HTML by sorting attributes alphabetically within each tag
+	# This handles Rails version differences in attribute ordering
+	def normalize_html_attributes(html)
+		html.gsub(/<([a-z0-9-]+)(\s+[^>]*)>/i) do |_match|
+			tag_name = ::Regexp.last_match(1)
+			attrs_string = ::Regexp.last_match(2)
+
+			# Parse attributes
+			attrs = attrs_string.scan(/([a-z0-9_-]+)="([^"]*)"/i)
+			sorted_attrs = attrs.sort_by { |name, _| name }.map { |name, value| %(#{name}="#{value}") }.join(" ")
+
+			sorted_attrs.empty? ? "<#{tag_name}>" : "<#{tag_name} #{sorted_attrs}>"
+		end
+	end
+
+	def assert_equivalent_html(actual, expected)
+		normalized_actual = normalize_html_attributes(actual)
+		normalized_expected = normalize_html_attributes(expected)
+		super(normalized_actual, normalized_expected)
+	end
 end
 
 Zeitwerk::Loader.eager_load_all
