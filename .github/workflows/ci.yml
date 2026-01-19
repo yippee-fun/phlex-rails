@@ -13,7 +13,7 @@ jobs:
         ruby-version: ["3.2", "3.3", "3.4", "head"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: phlex/setup
         uses: ruby/setup-ruby@v1
@@ -34,7 +34,7 @@ jobs:
   rubocop:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup
         uses: ruby/setup-ruby@v1
