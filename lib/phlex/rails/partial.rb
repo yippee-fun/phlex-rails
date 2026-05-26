@@ -8,7 +8,7 @@ class Phlex::Rails::Partial
 		@block = block
 	end
 
-	def render_in(view_context, &block)
+	def render_in(view_context, **options, &block)
 		block ||= @block
 		view_context.render(@path, *@args, **@kwargs, &block)
 	end

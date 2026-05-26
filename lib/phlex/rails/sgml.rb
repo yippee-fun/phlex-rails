@@ -103,7 +103,7 @@ module Phlex::Rails::SGML
 		Rails.application.config.action_controller.perform_caching ? super : yield
 	end
 
-	def render_in(view_context, &erb)
+	def render_in(view_context, **options, &erb)
 		case view_context
 		when defined?(ViewComponent::Base) && ViewComponent::Base
 			rails_view_context = view_context.helpers
