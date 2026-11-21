@@ -84,11 +84,12 @@ module Phlex::Rails::SGML
 			return super if renderable < Phlex::SGML
 		when Enumerable
 			return super unless defined?(ActiveRecord::Relation) && ActiveRecord::Relation === renderable
+			collection = true
 		when nil
 			return super
 		end
 
-		if renderable.respond_to?(:render_in) || renderable.respond_to?(:to_partial_path)
+		if collection || renderable.respond_to?(:render_in) || renderable.respond_to?(:to_partial_path)
 			if block
 				raw capture_context.render(renderable) { |*a| capture(*a, &block) }
 			else
@@ -119,7 +120,7 @@ module Phlex::Rails::SGML
 		}
 
 		fragments = if (request = context[:rails_view_context].request) && (fragment_header = request.headers["X-Fragments"])
-			fragment_header.split(",").map(&:strip).presence
+			fragment_header.split(",").map(&:strip).reject(&:empty?).presence
 		end
 
 		capture_context.capture do
