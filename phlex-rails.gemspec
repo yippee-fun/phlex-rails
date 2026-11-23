@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
 	spec.description = "Object-oriented views in pure Ruby."
 	spec.homepage = "https://www.phlex.fun"
 	spec.license = "MIT"
-	spec.required_ruby_version = ">= 3.2"
+	spec.required_ruby_version = ">= 3.3"
 
 	spec.metadata["homepage_uri"] = spec.homepage
 	spec.metadata["source_code_uri"] = "https://github.com/phlex-ruby/phlex-rails"
@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
 
 	spec.require_paths = ["lib"]
 
-	spec.add_runtime_dependency "phlex", "~> 2.4.0"
+	spec.add_runtime_dependency "phlex", "~> 3.0.0.beta1"
 	spec.add_runtime_dependency "railties", ">= 7.1", "< 9"
 	spec.add_runtime_dependency "zeitwerk", "~>2.7"
 end
