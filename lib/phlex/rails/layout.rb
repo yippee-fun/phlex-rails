@@ -14,9 +14,13 @@ module Phlex::Rails
 		include Helpers::JavaScriptImportmapTags
 		include Helpers::JavaScriptImportModuleTag
 		include Helpers::JavaScriptInlineImportmapTag
+		include Helpers::JavaScriptModulePreloadTag
 		include Helpers::TurboRefreshMethodTag
 		include Helpers::TurboRefreshScrollTag
 		include Helpers::TurboRefreshesWith
+		include Helpers::TurboExemptsPageFromCacheTag
+		include Helpers::TurboExemptsPageFromPreviewTag
+		include Helpers::TurboPageRequiresReloadTag
 
 		module Interface
 			def render(view_context, _locals, &)
