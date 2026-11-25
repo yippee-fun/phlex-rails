@@ -13,8 +13,11 @@ gem "rails"
 
 gem "quickdraw", github: "joeldrapper/quickdraw"
 
+# The Ruby LSP add-on's tests need these.
+gem "ruby-lsp"
+gem "ruby-lsp-rails"
+
 group :development do
 	gem "rubocop"
-	gem "ruby-lsp"
 	gem "bootsnap"
 end
