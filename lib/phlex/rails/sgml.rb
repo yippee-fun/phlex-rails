@@ -76,6 +76,14 @@ module Phlex::Rails::SGML
 		context[:capture_context]
 	end
 
+	def call(*, context: {}, **, &)
+		unless Hash === context
+			raise Phlex::ArgumentError.new("Expected context to be a Hash, got #{context.class}.")
+		end
+
+		super
+	end
+
 	def render(renderable = nil, &block)
 		case renderable
 		when Phlex::SGML, Proc, Method, String
