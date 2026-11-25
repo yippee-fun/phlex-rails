@@ -76,6 +76,14 @@ module Phlex::Rails::SGML
 		context[:capture_context]
 	end
 
+	def call(*, context: {}, **, &)
+		unless Hash === context
+			raise Phlex::ArgumentError.new("Expected context to be a Hash, got #{context.class}.")
+		end
+
+		super
+	end
+
 	def render(renderable = nil, &block)
 		case renderable
 		when Phlex::SGML, Proc, Method, String
@@ -84,11 +92,12 @@ module Phlex::Rails::SGML
 			return super if renderable < Phlex::SGML
 		when Enumerable
 			return super unless defined?(ActiveRecord::Relation) && ActiveRecord::Relation === renderable
+			collection = true
 		when nil
 			return super
 		end
 
-		if renderable.respond_to?(:render_in) || renderable.respond_to?(:to_partial_path)
+		if collection || renderable.respond_to?(:render_in) || renderable.respond_to?(:to_partial_path)
 			if block
 				raw capture_context.render(renderable) { |*a| capture(*a, &block) }
 			else
@@ -103,7 +112,7 @@ module Phlex::Rails::SGML
 		Rails.application.config.action_controller.perform_caching ? super : yield
 	end
 
-	def render_in(view_context, &erb)
+	def render_in(view_context, **options, &erb)
 		case view_context
 		when defined?(ViewComponent::Base) && ViewComponent::Base
 			rails_view_context = view_context.helpers
@@ -119,7 +128,7 @@ module Phlex::Rails::SGML
 		}
 
 		fragments = if (request = context[:rails_view_context].request) && (fragment_header = request.headers["X-Fragments"])
-			fragment_header.split(",").map(&:strip).presence
+			fragment_header.split(",").map(&:strip).reject(&:empty?).presence
 		end
 
 		capture_context.capture do

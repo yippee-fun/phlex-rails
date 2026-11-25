@@ -3,6 +3,8 @@
 module Phlex
 	module Rails
 		module Types
+			extend self
+
 			def Buffered(type)
 				-> (value) { Phlex::Rails::Buffered === value && type === value.unwrap }
 			end
