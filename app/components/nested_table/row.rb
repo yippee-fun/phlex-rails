@@ -6,7 +6,7 @@ class Components::NestedTable::Row < Phlex::HTML
 	end
 
 	def with_cell(&)
-		@cells << Components::NestedTable::Cell.new(&)
+		@cells << Components::NestedTable::Cell.with_content(&)
 	end
 
 	def before_template(&)
