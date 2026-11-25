@@ -15,6 +15,7 @@ class GeneratorsTest < Quickdraw::Test
 		assert File.exist?("#{path}/config/initializers/phlex.rb")
 		assert File.exist?("#{path}/app/components/base.rb")
 		assert File.exist?("#{path}/app/views/base.rb")
+		assert File.read("#{path}/app/components/base.rb").include?("def cache_store = Rails.cache")
 	end
 
 	test "view generator" do
