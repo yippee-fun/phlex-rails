@@ -17,14 +17,14 @@ class TypesTest < Quickdraw::Test
 		refute type === Phlex::Rails::Builder.new(nil, component: nil)
 		refute type === "not adapted builder"
 	end
-end
 
-test "types are available on Phlex::Rails::Types" do
-	type = Phlex::Rails::Types::Buffered(ActionView::Helpers::TagHelper::TagBuilder)
-	tag = ActionController::Base.new.view_context.tag
-	assert type === Phlex::Rails::Buffered.new(tag, component: nil)
-	refute type === "not buffered"
+	test "types are available on Phlex::Rails::Types" do
+		type = Phlex::Rails::Types::Buffered(ActionView::Helpers::TagHelper::TagBuilder)
+		tag = ActionController::Base.new.view_context.tag
+		assert type === Phlex::Rails::Buffered.new(tag, component: nil)
+		refute type === "not buffered"
 
-	type = Phlex::Rails::Types::Builder(ActionView::Helpers::FormBuilder)
-	refute type === "not adapted builder"
+		type = Phlex::Rails::Types::Builder(ActionView::Helpers::FormBuilder)
+		refute type === "not adapted builder"
+	end
 end
