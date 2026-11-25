@@ -8,11 +8,11 @@ Documentation can be found at [www.phlex.fun](https://www.phlex.fun).
 
 ### Support ✋
 
-If you run into any trouble, please [start a discussion](https://github.com/yippee-fun/phlex/discussions/new/choose), or [open an issue](https://github.com/joeldrapper/phlex-rails/issues/new) if you think you’ve found a bug.
+If you run into any trouble, please [start a discussion](https://github.com/yippee-fun/phlex/discussions/new/choose), or [open an issue](https://github.com/yippee-fun/phlex-rails/issues/new) if you think you’ve found a bug.
 
 ### Community 🙌
 
-Everyone interacting in Phlex codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/joeldrapper/phlex/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in Phlex codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/yippee-fun/phlex/blob/main/CODE_OF_CONDUCT.md).
 
 ### Sponsorship 💖
 
