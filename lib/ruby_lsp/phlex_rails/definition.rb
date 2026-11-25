@@ -54,7 +54,7 @@ module RubyLsp
 
 					next unless path && File.file?(path)
 
-					lines = entry.location.start_line..entry.location.end_line
+					lines = Range.new(entry.location.start_line, entry.location.end_line)
 
 					FragmentFinder.find(Prism.parse_file(path).value, name).each do |fragment|
 						next unless lines.cover?(fragment.location.start_line)
