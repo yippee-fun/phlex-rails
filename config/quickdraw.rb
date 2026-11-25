@@ -18,6 +18,11 @@ class App < Rails::Application
 
 	config.action_controller.perform_caching = true
 
+	# Components compile, and one that would fall back to rendering uncompiled
+	# raises instead. PHLEX_COMPILER=false runs the suite uncompiled.
+	config.phlex.compile = ENV["PHLEX_COMPILER"] != "false"
+	config.phlex.on_compile_failure = -> (component, error) { raise error }
+
 	routes.append do
 		resources :posts
 	end

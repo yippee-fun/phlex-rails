@@ -30,6 +30,27 @@ jobs:
       - name: Tests
         run: bundle exec appraisal bundle exec qd
 
+  # The suite compiles components by default, so this runs it with the compiler off.
+  uncompiled:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: false
+          rubygems: latest
+
+      - name: Install dependencies
+        run: bundle config set --local without development && bundle install --jobs 4
+
+      - name: Tests
+        env:
+          PHLEX_COMPILER: "false"
+        run: bundle exec qd
+
   rubocop:
     runs-on: "ubuntu-latest"
     steps:

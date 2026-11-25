@@ -101,4 +101,6 @@ module Phlex
 	end
 
 	ActiveSupport::SafeBuffer.include(Phlex::SGML::SafeObject)
+
+	Rails::Railtie
 end
