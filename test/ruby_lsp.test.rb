@@ -3,6 +3,7 @@
 require "ruby_lsp/internal"
 require "ruby_lsp/phlex_rails/addon"
 require "ruby_lsp/test_helper"
+require "tmpdir"
 
 class RubyLspIndexingTest < Quickdraw::Test
 	test "indexes registered helpers" do
@@ -67,6 +68,86 @@ class RubyLspDefinitionTest < Quickdraw::Test
 			server.process_message(id: 1, method: "textDocument/definition", params: { textDocument: { uri: }, position: { line:, character: } })
 
 			Array(pop_result(server).response).map { |link| [URI(link.target_uri).path, link.target_range.start.line] }
+		end
+	end
+end
+
+class RubyLspCodeLensTest < Quickdraw::Test
+	include RubyLsp::TestHelper
+
+	COMPONENT = <<~RUBY
+		module Views
+			module Posts
+				class Show < Phlex::HTML
+					def view_template
+						render Show.new
+					end
+				end
+			end
+		end
+
+		class NotAComponent
+		end
+	RUBY
+
+	CONTROLLER = <<~RUBY
+		class PostsController < ActionController::Base
+			def show
+				render Views::Posts::Show.new
+			end
+
+			def edit
+				Views::Posts::Show
+			end
+		end
+	RUBY
+
+	LAYOUT = <<~RUBY
+		module Views
+			class Layout < Phlex::HTML
+				def view_template
+					render Posts::Show.new
+				end
+			end
+		end
+	RUBY
+
+	test "shows where a component is rendered" do
+		lenses = code_lenses({ "app/controllers/posts_controller.rb" => CONTROLLER, "app/views/layout.rb" => LAYOUT })
+
+		assert_equal lenses.map { |lens| [lens.range.start.line, lens.command.title] }, [[2, "Rendered in 2 places"]]
+		assert_equal lenses.first.command.arguments.first.map { |uri| uri[%r{app/.*}] }, ["app/controllers/posts_controller.rb#L3", "app/views/layout.rb#L4"]
+	end
+
+	test "names the place when a component is rendered in one place" do
+		lenses = code_lenses({ "app/controllers/posts_controller.rb" => CONTROLLER })
+
+		assert_equal lenses.map { |lens| lens.command.title }, ["Rendered in PostsController#show"]
+	end
+
+	test "shows nothing for a component that isn't rendered" do
+		assert_equal code_lenses({}), []
+	end
+
+	private def code_lenses(files)
+		Dir.mktmpdir do |workspace|
+			files.merge("app/views/posts/show.rb" => COMPONENT).each do |path, source|
+				FileUtils.mkdir_p(File.dirname(File.join(workspace, path)))
+				File.write(File.join(workspace, path), source)
+			end
+
+			uri = URI::Generic.from_path(path: File.join(workspace, "app/views/posts/show.rb"))
+
+			with_server(COMPONENT, uri) do |server, uri|
+				server.global_state.instance_variable_set(:@workspace_uri, URI::Generic.from_path(path: workspace))
+				index = server.global_state.index
+				index.index_single(URI::Generic.from_path(path: "/phlex/html.rb"), "module Phlex; class SGML; end; class HTML < SGML; end; end")
+				files.each { |path, source| index.index_single(URI::Generic.from_path(path: File.join(workspace, path)), source) }
+
+				server.process_message(id: 1, method: "textDocument/codeLens", params: { textDocument: { uri: } })
+
+				pop_result(server).response.select { |lens| lens.command.command == "rubyLsp.openFile" }
+			end
 		end
 	end
 end

@@ -2,6 +2,7 @@
 
 require "ruby_lsp/addon"
 require_relative "definition"
+require_relative "code_lens"
 
 module RubyLsp
 	module PhlexRails
@@ -19,6 +20,13 @@ module RubyLsp
 
 			def version
 				"0.1.0"
+			end
+
+			def create_code_lens_listener(response_builder, uri, dispatcher)
+				return unless index
+
+				@render_sites ||= RenderSites.new(index)
+				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, dispatcher)
 			end
 
 			def create_definition_listener(response_builder, uri, node_context, dispatcher)
