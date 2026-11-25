@@ -43,22 +43,21 @@ module Phlex::Rails::SGML
 	end
 
 	def helpers
-		warn <<~MESSAGE
-			The `helpers` method is deprecated and will be removed in the next
-			minor version of phlex-rails.
+		raise NoMethodError.new(<<~MESSAGE, :helpers)
+			The `helpers` method was removed in phlex-rails 3.
 
-			If you absolutely need to access the underlying Rails view context,
-			you can do that via the `view_context` method, though this is
-			not recommended.
+			Use one of the built-in helper adapters, e.g.
 
-			It is much safer to use one of the built-in helper adapters or to
-			register your own adapter via `register_output_helper` or
+				include Phlex::Rails::Helpers::LinkTo
+
+			or register your own adapter via `register_output_helper` or
 			`register_value_helper`.
+
+			If you absolutely need the underlying Rails view context, use
+			`view_context`, though this is not recommended.
 
 			See https://www.phlex.fun/rails/helpers
 		MESSAGE
-
-		view_context
 	end
 
 	def view_context
