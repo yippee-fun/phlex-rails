@@ -98,11 +98,17 @@ module Phlex::Rails::SGML
 		end
 	end
 
+	def fragments(*names)
+		raise Phlex::ArgumentError.new("Expected at least one fragment name.") if names.empty?
+
+		Phlex::Rails::Fragments.new(self, names)
+	end
+
 	def low_level_cache(...)
 		Rails.application.config.action_controller.perform_caching ? super : yield
 	end
 
-	def render_in(view_context, **options, &erb)
+	def render_in(view_context, fragments: nil, **options, &erb)
 		case view_context
 		when defined?(ViewComponent::Base) && ViewComponent::Base
 			rails_view_context = view_context.helpers
@@ -117,7 +123,7 @@ module Phlex::Rails::SGML
 			capture_context:,
 		}
 
-		fragments = if (request = context[:rails_view_context].request) && (fragment_header = request.headers["X-Fragments"])
+		fragments ||= if (request = context[:rails_view_context].request) && (fragment_header = request.headers["X-Fragments"])
 			fragment_header.split(",").map(&:strip).presence
 		end
 
