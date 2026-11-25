@@ -2,15 +2,15 @@
 
 class Components::NestedTable < Phlex::HTML
 	def with_head(&)
-		@head = Components::NestedTable::RowContainer.new(tag: "thead", &)
+		@head = Components::NestedTable::RowContainer.with_content(tag: "thead", &)
 	end
 
 	def with_body(&)
-		@bodies << Components::NestedTable::RowContainer.new(tag: "tbody", &)
+		@bodies << Components::NestedTable::RowContainer.with_content(tag: "tbody", &)
 	end
 
 	def with_foot(&)
-		@foot = Components::NestedTable::RowContainer.new(tag: "tfoot", &)
+		@foot = Components::NestedTable::RowContainer.with_content(tag: "tfoot", &)
 	end
 
 	def initialize
