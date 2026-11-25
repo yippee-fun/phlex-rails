@@ -3,6 +3,7 @@
 require "ruby_lsp/addon"
 require_relative "definition"
 require_relative "code_lens"
+require_relative "helper_adapters"
 
 module RubyLsp
 	module PhlexRails
@@ -27,6 +28,18 @@ module RubyLsp
 
 				@render_sites ||= RenderSites.new(index)
 				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, dispatcher)
+			end
+
+			def create_completion_listener(response_builder, node_context, dispatcher, uri)
+				return unless index
+
+				HelperAdapterCompletion.new(response_builder, index, node_context, uri, dispatcher)
+			end
+
+			def create_hover_listener(response_builder, node_context, dispatcher)
+				return unless index
+
+				HelperAdapterHover.new(response_builder, index, node_context, nil, dispatcher)
 			end
 
 			def create_definition_listener(response_builder, uri, node_context, dispatcher)

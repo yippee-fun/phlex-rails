@@ -151,3 +151,69 @@ class RubyLspCodeLensTest < Quickdraw::Test
 		end
 	end
 end
+
+class RubyLspHelperAdapterTest < Quickdraw::Test
+	include RubyLsp::TestHelper
+
+	SOURCE = <<~RUBY
+		class Base < Phlex::HTML
+			include Phlex::Rails::Helpers::ButtonTo
+		end
+
+		class Card < Base
+			def view_template
+				link_t
+				button_t
+				link_to
+			end
+		end
+
+		class NotAComponent
+			def call
+				link_t
+			end
+		end
+	RUBY
+
+	test "completes a helper whose adapter isn't included, and includes it" do
+		item = completions(6, 8).find { |item| item.label == "link_to" }
+
+		assert_equal item.label_details.description, "include Phlex::Rails::Helpers::LinkTo"
+		assert_equal item.additional_text_edits.map { |edit| [edit.range.start.line, edit.new_text] }, [[5, "\tinclude Phlex::Rails::Helpers::LinkTo\n"]]
+	end
+
+	test "leaves helpers whose adapter an ancestor includes to ruby-lsp" do
+		assert_equal completions(7, 10).select { |item| item.label_details&.description&.start_with?("include") }, []
+	end
+
+	test "doesn't complete helpers outside components" do
+		assert_equal completions(14, 8).select { |item| item.label == "link_to" }, []
+	end
+
+	test "explains how to include a missing helper on hover" do
+		assert_equal hover(8, 3).contents.value.include?("include Phlex::Rails::Helpers::LinkTo"), true
+	end
+
+	private def completions(line, character)
+		request("textDocument/completion", line, character)
+	end
+
+	private def hover(line, character)
+		request("textDocument/hover", line, character)
+	end
+
+	private def request(method, line, character)
+		with_server(SOURCE) do |server, uri|
+			index = server.global_state.index
+			index.index_single(URI::Generic.from_path(path: "/phlex/html.rb"), "module Phlex; class SGML; end; class HTML < SGML; end; end")
+
+			%w[link_to button_to].each do |helper|
+				path = File.expand_path("../lib/phlex/rails/helpers/#{helper}.rb", __dir__)
+				index.index_single(URI::Generic.from_path(path:), File.read(path))
+			end
+
+			server.process_message(id: 1, method:, params: { textDocument: { uri: }, position: { line:, character: } })
+			pop_result(server).response
+		end
+	end
+end
