@@ -17,7 +17,7 @@ namespace :phlex do
 		end
 
 		diagnostics = (opted_out + compiled.flat_map { |component| Phlex::Compiler.explain(component) })
-			.select { |diagnostic| diagnostic.path.start_with?(root) }
+			.select { |diagnostic| diagnostic.path&.start_with?(root) }
 			.uniq
 			.sort_by { |diagnostic| [diagnostic.path, diagnostic.line || 0] }
 

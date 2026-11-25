@@ -6,17 +6,19 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 	config.phlex.on_compile_failure = Phlex::Compiler::DEFAULT_FAILURE_HANDLER
 
 	# The component a file defines and any nested in it, which Zeitwerk
-	# doesn't report when they're defined in the same file.
-	def self.components_in(value, components = [])
-		return components unless Module === value
+	# doesn't report when they're defined in the same file. A constant naming
+	# a class defined elsewhere isn't that class's file.
+	NAME = Module.instance_method(:name)
+
+	def self.components_in(cpath, value, components = [])
+		return components unless Module === value && NAME.bind_call(value) == cpath
 
 		components << value if Class === value && Phlex::SGML > value
 
 		value.constants(false).each do |name|
 			next if value.autoload?(name, false)
 
-			nested = value.const_get(name, false)
-			components_in(nested, components) if Module === nested && nested.name == "#{value.name}::#{name}"
+			components_in("#{cpath}::#{name}", value.const_get(name, false), components)
 		end
 
 		components
@@ -42,12 +44,12 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 		unloaded = []
 
 		Rails.autoloaders.each do |loader|
-			loader.on_load do |_cpath, value, _abspath|
-				Phlex::Rails::Railtie.components_in(value).each { |component| Phlex::Compiler.precompile(component) }
+			loader.on_load do |cpath, value, _abspath|
+				Phlex::Rails::Railtie.components_in(cpath, value).each { |component| Phlex::Compiler.precompile(component) }
 			end
 
-			loader.on_unload do |_cpath, value, _abspath|
-				unloaded.concat(Phlex::Rails::Railtie.components_in(value))
+			loader.on_unload do |cpath, value, _abspath|
+				unloaded.concat(Phlex::Rails::Railtie.components_in(cpath, value))
 			end
 		end
 

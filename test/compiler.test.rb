@@ -85,7 +85,7 @@ class CompilerTest < Quickdraw::Test
 			puts JSON.dump(result)
 		RUBY
 
-		JSON.parse(run_in(root, "script.rb").lines.last)
+		(line = run_in(root, "script.rb").lines.last) && JSON.parse(line)
 	end
 
 	test "components are compiled by default once a production app boots" do
@@ -201,6 +201,28 @@ class CompilerTest < Quickdraw::Test
 					!Object.autoload?(:Badge).nil?,
 					Badge.new.call,
 				]
+			RUBY
+		end
+	end
+
+	test "reloading a file that names a component defined elsewhere leaves that component alone" do
+		files = {
+			"app/components/card.rb" => CARD,
+			"app/components/aliased_card.rb" => <<~RUBY,
+				# frozen_string_literal: true
+
+				AliasedCard = Phlex::HTML
+			RUBY
+		}
+
+		with_app(env: "development", files:) do |root|
+			assert_equal boot(root, <<~RUBY), ["Phlex::HTML", "<div>card</div>"]
+				AliasedCard
+				Card.new.call
+
+				Rails.application.reloader.reload!
+
+				[AliasedCard.name, Card.new.call]
 			RUBY
 		end
 	end
