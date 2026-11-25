@@ -130,6 +130,34 @@ class CompilerTest < Quickdraw::Test
 		end
 	end
 
+	test "components nested in an autoloaded file are compiled and forgotten with it" do
+		files = {
+			"app/components/card.rb" => <<~RUBY,
+				# frozen_string_literal: true
+
+				class Card < Phlex::HTML
+					class Header < Phlex::HTML
+						def view_template = h1 { "header" }
+					end
+
+					def view_template = div { "card" }
+				end
+			RUBY
+		}
+
+		with_app(env: "development", files:) do |root|
+			assert_equal boot(root, <<~RUBY), [true, false]
+				header = Card::Header
+				compiled = compiled_method?(header, :view_template)
+				path = header.instance_method(:view_template).source_location[0]
+
+				Rails.application.reloader.reload!
+
+				[compiled, Phlex.__compiled_source_maps__.key?(path)]
+			RUBY
+		end
+	end
+
 	test "reloading compiles the new class and forgets the old one" do
 		with_app(env: "development") do |root|
 			assert_equal boot(root, <<~RUBY), [true, false, true, "<div>card</div>"]

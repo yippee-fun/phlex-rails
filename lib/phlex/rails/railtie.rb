@@ -5,6 +5,23 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 	config.phlex.compile = true
 	config.phlex.on_compile_failure = Phlex::Compiler::DEFAULT_FAILURE_HANDLER
 
+	# The component a file defines and any nested in it, which Zeitwerk
+	# doesn't report when they're defined in the same file.
+	def self.components_in(value, components = [])
+		return components unless Module === value
+
+		components << value if Class === value && Phlex::SGML > value
+
+		value.constants(false).each do |name|
+			next if value.autoload?(name, false)
+
+			nested = value.const_get(name, false)
+			components_in(nested, components) if Module === nested && nested.name == "#{value.name}::#{name}"
+		end
+
+		components
+	end
+
 	rake_tasks do
 		load "#{__dir__}/tasks.rake"
 	end
@@ -26,11 +43,11 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 
 		Rails.autoloaders.each do |loader|
 			loader.on_load do |_cpath, value, _abspath|
-				Phlex::Compiler.precompile(value) if Class === value && Phlex::SGML > value
+				Phlex::Rails::Railtie.components_in(value).each { |component| Phlex::Compiler.precompile(component) }
 			end
 
 			loader.on_unload do |_cpath, value, _abspath|
-				unloaded << value if Class === value && Phlex::SGML > value
+				unloaded.concat(Phlex::Rails::Railtie.components_in(value))
 			end
 		end
 
