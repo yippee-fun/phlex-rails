@@ -278,7 +278,7 @@ class CompilerTest < Quickdraw::Test
 		with_app do |root|
 			output = run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:source[Card]")
 
-			assert output.start_with?("# app/components/card.rb\n# -*- coding: UTF-8; frozen_string_literal: true -*-\nclass Card\n")
+			assert output.start_with?("# -*- coding: UTF-8; frozen_string_literal: true -*-\n# app/components/card.rb\nclass Card\n")
 			assert output.include?("<div>card</div>")
 		end
 	end
