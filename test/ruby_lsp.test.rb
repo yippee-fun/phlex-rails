@@ -217,3 +217,69 @@ class RubyLspHelperAdapterTest < Quickdraw::Test
 		end
 	end
 end
+
+class RubyLspExplainTest < Quickdraw::Test
+	include RubyLsp::TestHelper
+
+	test "the server add-on explains a component" do
+		component = Class.new(Phlex::HTML)
+		stub_const = "RubyLspExplainCase#{object_id}"
+		Object.const_set(stub_const, component)
+
+		original = Phlex::Compiler.method(:explain)
+		Phlex::Compiler.define_singleton_method(:explain) do |given|
+			[Phlex::Compiler::Diagnostics::Diagnostic.new(path: "/app/views/card.rb", line: 3, message: "div keeps its call because reasons")] if given == component
+		end
+
+		assert_equal server_addon_result("explain", class_name: stub_const), {
+			"diagnostics" => [{ "path" => "/app/views/card.rb", "line" => 3, "message" => "div keeps its call because reasons" }],
+		}
+	ensure
+		Phlex::Compiler.singleton_class.define_method(:explain, original) if original
+		Object.__send__(:remove_const, stub_const) if stub_const && Object.const_defined?(stub_const)
+	end
+
+	test "the server add-on explains nothing for a class that isn't a component" do
+		assert_equal server_addon_result("explain", class_name: "String"), { "diagnostics" => [] }
+		assert_equal server_addon_result("explain", class_name: "NotAConstant"), { "diagnostics" => [] }
+	end
+
+	test "shows explain diagnostics as code lenses on their lines" do
+		client = Object.new
+		client.define_singleton_method(:delegate_request) do |server_addon_name:, request_name:, class_name:|
+			next unless [server_addon_name, request_name, class_name] == ["PhlexRails", "explain", "Card"]
+
+			{
+				diagnostics: [
+					{ path: "/views/card.rb", line: 3, message: "div keeps its call because reasons" },
+					{ path: "/views/base.rb", line: 9, message: "elsewhere" },
+					{ path: "/views/card.rb", line: nil, message: "compiling Card raised" },
+				],
+			}
+		end
+
+		source = "class Card < Phlex::HTML\n\tdef view_template\n\t\tdiv { }\n\tend\nend\n"
+		uri = URI::Generic.from_path(path: "/views/card.rb")
+
+		lenses = with_server(source, uri) do |server, uri|
+			server.global_state.index.index_single(URI::Generic.from_path(path: "/phlex/html.rb"), "module Phlex; class SGML; end; class HTML < SGML; end; end")
+			RubyLsp::Addon.get("PhlexRails", "0.1.0").instance_variable_set(:@rails_runner_client, client)
+			server.process_message(id: 1, method: "textDocument/codeLens", params: { textDocument: { uri: } })
+			pop_result(server).response.select { |lens| lens.command.title.start_with?("Phlex compiler") }
+		end
+
+		assert_equal lenses.map { |lens| [lens.range.start.line, lens.command.title] }, [
+			[2, "Phlex compiler: div keeps its call because reasons"],
+			[0, "Phlex compiler: compiling Card raised"],
+		]
+	end
+
+	private def server_addon_result(request, **params)
+		require "ruby_lsp/ruby_lsp_rails/server"
+		require "ruby_lsp/phlex_rails/server_addon"
+
+		stdout = StringIO.new
+		RubyLsp::PhlexRails::ServerAddon.new(stdout, StringIO.new, {}).execute(request, params)
+		JSON.parse(stdout.string.split("\r\n\r\n", 2).last)["result"]
+	end
+end

@@ -2,15 +2,18 @@
 
 module RubyLsp
 	module PhlexRails
-		# Shows where a component is rendered, from `SomeComponent.new` calls in app/.
+		# Shows where a component is rendered, from `SomeComponent.new` calls in
+		# app/, and what the compiler leaves to the runtime, from the app's runner.
 		class CodeLens
 			include Requests::Support::Common
 
-			def initialize(response_builder, index, render_sites, workspace_path, dispatcher)
+			def initialize(response_builder, index, render_sites, workspace_path, path, explain, dispatcher)
 				@response_builder = response_builder
 				@index = index
 				@render_sites = render_sites
 				@workspace_path = workspace_path
+				@path = path
+				@explain = explain
 				@nesting = []
 
 				dispatcher.register(self, :on_class_node_enter, :on_class_node_leave, :on_module_node_enter, :on_module_node_leave)
@@ -21,7 +24,9 @@ module RubyLsp
 
 				class_name = @nesting.join("::")
 
-				return unless component?(class_name)
+				add_explain_lenses(node, class_name)
+
+				return unless @index && component?(class_name)
 
 				sites = @render_sites.for(class_name, @workspace_path)
 
@@ -46,6 +51,29 @@ module RubyLsp
 
 			def on_module_node_leave(node)
 				@nesting.pop
+			end
+
+			# The runner skips classes that aren't components.
+			private def add_explain_lenses(node, class_name)
+				return unless @path
+				return if @index && !component?(class_name)
+
+				@explain.call(class_name).each do |diagnostic|
+					next unless diagnostic[:path] == @path
+
+					line = diagnostic[:line] || node.location.start_line
+					position = Interface::Position.new(line: line - 1, character: 0)
+
+					@response_builder << Interface::CodeLens.new(
+						range: Interface::Range.new(start: position, end: position),
+						command: Interface::Command.new(
+							title: "Phlex compiler: #{diagnostic[:message]}",
+							command: "rubyLsp.openFile",
+							arguments: [["#{URI::Generic.from_path(path: @path)}#L#{line}"]],
+						),
+						data: { type: "file" },
+					)
+				end
 			end
 
 			private def component?(class_name)

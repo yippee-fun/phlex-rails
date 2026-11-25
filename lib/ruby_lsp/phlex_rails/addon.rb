@@ -10,6 +10,16 @@ module RubyLsp
 		class Addon < ::RubyLsp::Addon
 			def activate(global_state, message_queue)
 				@global_state = global_state
+				@rails_runner_client = nil
+
+				# Booting the app can take a while, so this waits in the background.
+				Thread.new do
+					client = ::RubyLsp::Addon.get("Ruby LSP Rails", ">= 0.4", "< 0.5").rails_runner_client
+					client.register_server_addon(File.expand_path("server_addon.rb", __dir__))
+					@rails_runner_client ||= client
+				rescue ::RubyLsp::Addon::AddonNotFoundError, ::RubyLsp::Addon::IncompatibleApiError
+					nil
+				end
 			end
 
 			def deactivate
@@ -24,10 +34,8 @@ module RubyLsp
 			end
 
 			def create_code_lens_listener(response_builder, uri, dispatcher)
-				return unless index
-
-				@render_sites ||= RenderSites.new(index)
-				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, dispatcher)
+				@render_sites ||= RenderSites.new(index) if index
+				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, uri.full_path, method(:explain), dispatcher)
 			end
 
 			def create_completion_listener(response_builder, node_context, dispatcher, uri)
@@ -44,6 +52,10 @@ module RubyLsp
 
 			def create_definition_listener(response_builder, uri, node_context, dispatcher)
 				Definition.new(response_builder, index, @global_state.workspace_path, node_context, dispatcher)
+			end
+
+			private def explain(class_name)
+				@rails_runner_client&.delegate_request(server_addon_name: "PhlexRails", request_name: "explain", class_name:)&.dig(:diagnostics) || []
 			end
 
 			# ruby-lsp 0.27 replaced RubyIndexer with Rubydex, so features that need the index are off there.
