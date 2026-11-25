@@ -245,4 +245,29 @@ class CompilerTest < Quickdraw::Test
 			TEXT
 		end
 	end
+
+	test "phlex:source shows the Ruby a component compiles to" do
+		with_app do |root|
+			output = run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:source[Card]")
+
+			assert output.start_with?("# app/components/card.rb\nclass Card\n")
+			assert output.include?("<div>card</div>")
+		end
+	end
+
+	test "phlex:source says when a component has nothing to compile" do
+		files = {
+			"app/components/plain.rb" => <<~RUBY,
+				# frozen_string_literal: true
+
+				class Plain < Phlex::HTML
+					def label = "plain Ruby"
+				end
+			RUBY
+		}
+
+		with_app(files:) do |root|
+			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:source[Plain]"), "Plain has nothing to compile.\n"
+		end
+	end
 end

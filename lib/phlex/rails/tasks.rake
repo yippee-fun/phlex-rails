@@ -27,4 +27,17 @@ namespace :phlex do
 			diagnostics.each { |diagnostic| puts diagnostic.to_s.delete_prefix(root) }
 		end
 	end
+
+	desc "Show the Ruby the Phlex compiler generates for a component"
+	task :source, [:component] => :environment do |_task, arguments|
+		name = arguments[:component] or abort "Name a component, as in `rails phlex:source[Components::Card]`."
+		component = name.constantize
+		source = Phlex::Compiler.source(component)
+
+		if source.empty?
+			puts "#{component} has nothing to compile."
+		else
+			puts source.gsub(%r{^# #{Regexp.escape(Rails.root.to_s)}/}, "# ")
+		end
+	end
 end
