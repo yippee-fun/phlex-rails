@@ -33,6 +33,7 @@ module Phlex
 				"javascript_url" => "JavaScriptURL",
 				"path_to_javascript" => "PathToJavaScript",
 				"path_to_stylesheet" => "PathToStyleSheet",
+				"polymorphic_url" => "PolymorphicURL",
 				"rich_textarea" => "RichTextArea",
 				"rich_textarea_tag" => "RichTextAreaTag",
 				"sanitize_css" => "SanitizeCSS",
