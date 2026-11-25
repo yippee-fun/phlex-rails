@@ -43,8 +43,9 @@ jobs:
           bundler-cache: false
           rubygems: latest
 
+      # The test app loads bootsnap, which is in the development group.
       - name: Install dependencies
-        run: bundle config set --local without development && bundle install --jobs 4
+        run: bundle install --jobs 4
 
       - name: Tests
         env:
