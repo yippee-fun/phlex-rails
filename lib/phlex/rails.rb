@@ -18,6 +18,7 @@ module Phlex
 				"default_url_options" => "DefaultURLOptions",
 				"dom_class" => "DOMClass",
 				"dom_id" => "DOMID",
+				"dom_target" => "DOMTarget",
 				"field_id" => "FieldID",
 				"font_url" => "FontURL",
 				"image_url" => "ImageURL",
