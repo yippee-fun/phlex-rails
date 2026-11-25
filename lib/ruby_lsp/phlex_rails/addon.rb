@@ -30,7 +30,7 @@ module RubyLsp
 					arguments = node.arguments&.arguments
 
 					return unless owner
-					return unless name in :register_output_helper | :register_value_helper
+					return unless name in :register_output_helper | :register_value_helper | :register_builder_yielding_helper
 
 					case arguments
 					in [Prism::SymbolNode[unescaped: String => method_name], *]
