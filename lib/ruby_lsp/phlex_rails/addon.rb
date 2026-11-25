@@ -35,7 +35,7 @@ module RubyLsp
 
 			def create_code_lens_listener(response_builder, uri, dispatcher)
 				@render_sites ||= RenderSites.new(index) if index
-				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, uri.full_path, method(:explain), dispatcher)
+				CodeLens.new(response_builder, index, @render_sites, @global_state.workspace_path, uri.full_path, method(:runner_request), dispatcher)
 			end
 
 			def create_completion_listener(response_builder, node_context, dispatcher, uri)
@@ -54,8 +54,8 @@ module RubyLsp
 				Definition.new(response_builder, index, @global_state.workspace_path, node_context, dispatcher)
 			end
 
-			private def explain(class_name)
-				@rails_runner_client&.delegate_request(server_addon_name: "PhlexRails", request_name: "explain", class_name:)&.dig(:diagnostics) || []
+			private def runner_request(request_name, class_name)
+				@rails_runner_client&.delegate_request(server_addon_name: "PhlexRails", request_name:, class_name:)
 			end
 
 			# ruby-lsp 0.27 replaced RubyIndexer with Rubydex, so features that need the index are off there.

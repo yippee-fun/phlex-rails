@@ -274,6 +274,56 @@ class RubyLspExplainTest < Quickdraw::Test
 		]
 	end
 
+	test "the server add-on writes a component's compiled source to a file" do
+		component = Class.new(Phlex::HTML)
+		stub_const = "RubyLspSourceCase#{object_id}"
+		Object.const_set(stub_const, component)
+
+		Phlex::Compiler.singleton_class.alias_method(:__original_source__, :source) if Phlex::Compiler.respond_to?(:source)
+		Phlex::Compiler.define_singleton_method(:source) { |given| (given == component) ? "# /app/views/card.rb\ndef view_template; end\n" : "" }
+
+		result = server_addon_result("source", class_name: stub_const)
+
+		assert_equal result["path"], Rails.root.join("tmp/phlex/compiled/#{stub_const.underscore}.rb").to_s
+		assert_equal File.read(result["path"]), "# /app/views/card.rb\ndef view_template; end\n"
+	ensure
+		if Phlex::Compiler.respond_to?(:__original_source__)
+			Phlex::Compiler.singleton_class.alias_method(:source, :__original_source__)
+			Phlex::Compiler.singleton_class.remove_method(:__original_source__)
+		else
+			Phlex::Compiler.singleton_class.remove_method(:source)
+		end
+
+		Object.__send__(:remove_const, stub_const) if Object.const_defined?(stub_const)
+		FileUtils.rm_f(result["path"]) if result
+	end
+
+	test "the server add-on writes nothing when nothing compiles" do
+		assert_equal server_addon_result("source", class_name: "String"), { "path" => nil }
+	end
+
+	test "shows a code lens that opens the compiled source" do
+		client = Object.new
+		client.define_singleton_method(:delegate_request) do |server_addon_name:, request_name:, class_name:|
+			case [server_addon_name, request_name, class_name]
+			in ["PhlexRails", "source", "Card"] then { path: "/app/tmp/phlex/compiled/card.rb" }
+			in ["PhlexRails", "explain", _] then { diagnostics: [] }
+			end
+		end
+
+		source = "class Card < Phlex::HTML\n\tdef view_template\n\t\tdiv { }\n\tend\nend\n"
+		uri = URI::Generic.from_path(path: "/views/card.rb")
+
+		lenses = with_server(source, uri) do |server, uri|
+			server.global_state.index.index_single(URI::Generic.from_path(path: "/phlex/html.rb"), "module Phlex; class SGML; end; class HTML < SGML; end; end")
+			RubyLsp::Addon.get("PhlexRails", "0.1.0").instance_variable_set(:@rails_runner_client, client)
+			server.process_message(id: 1, method: "textDocument/codeLens", params: { textDocument: { uri: } })
+			pop_result(server).response.select { |lens| lens.command.title == "Show compiled source" }
+		end
+
+		assert_equal lenses.map { |lens| [lens.range.start.line, lens.command.arguments] }, [[0, [["file:///app/tmp/phlex/compiled/card.rb"]]]]
+	end
+
 	private def server_addon_result(request, **params)
 		require "ruby_lsp/ruby_lsp_rails/server"
 		require "ruby_lsp/phlex_rails/server_addon"

@@ -7,13 +7,13 @@ module RubyLsp
 		class CodeLens
 			include Requests::Support::Common
 
-			def initialize(response_builder, index, render_sites, workspace_path, path, explain, dispatcher)
+			def initialize(response_builder, index, render_sites, workspace_path, path, runner, dispatcher)
 				@response_builder = response_builder
 				@index = index
 				@render_sites = render_sites
 				@workspace_path = workspace_path
 				@path = path
-				@explain = explain
+				@runner = runner
 				@nesting = []
 
 				dispatcher.register(self, :on_class_node_enter, :on_class_node_leave, :on_module_node_enter, :on_module_node_leave)
@@ -24,7 +24,7 @@ module RubyLsp
 
 				class_name = @nesting.join("::")
 
-				add_explain_lenses(node, class_name)
+				add_runner_lenses(node, class_name)
 
 				return unless @index && component?(class_name)
 
@@ -54,11 +54,21 @@ module RubyLsp
 			end
 
 			# The runner skips classes that aren't components.
-			private def add_explain_lenses(node, class_name)
+			private def add_runner_lenses(node, class_name)
 				return unless @path
 				return if @index && !component?(class_name)
 
-				@explain.call(class_name).each do |diagnostic|
+				if (compiled = @runner.call("source", class_name)&.dig(:path))
+					@response_builder << create_code_lens(
+						node,
+						title: "Show compiled source",
+						command_name: "rubyLsp.openFile",
+						arguments: [[URI::Generic.from_path(path: compiled).to_s]],
+						data: { type: "file" },
+					)
+				end
+
+				(@runner.call("explain", class_name)&.dig(:diagnostics) || []).each do |diagnostic|
 					next unless diagnostic[:path] == @path
 
 					line = diagnostic[:line] || node.location.start_line
