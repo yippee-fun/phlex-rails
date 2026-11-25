@@ -28,7 +28,7 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 
 	# After eager loading, so a production app's components are compiled
 	# before the server forks. Components autoloaded later are compiled as
-	# they load, and an unloaded one is forgotten once a reload finishes.
+	# they load, and the unloaded ones are forgotten once a reload finishes.
 	config.after_initialize do |app|
 		unless app.config.phlex.compile
 			Phlex::Compiler.disable!
@@ -52,7 +52,7 @@ class Phlex::Rails::Railtie < ::Rails::Railtie
 		end
 
 		app.reloader.after_class_unload do
-			unloaded.each { |component| Phlex::Compiler.forget(component) }
+			Phlex::Compiler.forget(*unloaded)
 			unloaded.clear
 		end
 	end

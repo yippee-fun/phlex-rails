@@ -177,6 +177,34 @@ class CompilerTest < Quickdraw::Test
 		end
 	end
 
+	test "reloading leaves the unloaded components to autoload when they're next used" do
+		files = {
+			"app/components/card.rb" => CARD,
+			"app/components/badge.rb" => <<~RUBY,
+				# frozen_string_literal: true
+
+				class Badge < Phlex::HTML
+					def view_template = span { "badge" }
+				end
+			RUBY
+		}
+
+		with_app(env: "development", files:) do |root|
+			assert_equal boot(root, <<~RUBY), [true, true, "<span>badge</span>"]
+				Card.new.call
+				Badge.new.call
+
+				Rails.application.reloader.reload!
+
+				[
+					!Object.autoload?(:Card).nil?,
+					!Object.autoload?(:Badge).nil?,
+					Badge.new.call,
+				]
+			RUBY
+		end
+	end
+
 	test "setting config.phlex.compile to false leaves components uncompiled" do
 		with_app(config: "config.phlex.compile = false") do |root|
 			assert_equal boot(root, <<~RUBY), [false, false, "<div>card</div>"]
