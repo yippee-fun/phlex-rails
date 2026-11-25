@@ -29,6 +29,6 @@ Gem::Specification.new do |spec|
 	spec.require_paths = ["lib"]
 
 	spec.add_runtime_dependency "phlex", "~> 3.0.0.beta1"
-	spec.add_runtime_dependency "railties", ">= 7.1", "< 9"
+	spec.add_runtime_dependency "railties", ">= 8.0", "< 9"
 	spec.add_runtime_dependency "zeitwerk", "~>2.7"
 end
