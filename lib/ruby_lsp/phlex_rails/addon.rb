@@ -20,25 +20,28 @@ module RubyLsp
 			end
 		end
 
-		class IndexingEnhancement < RubyIndexer::Enhancement
-			def on_call_node_enter(node)
-				name = node.name
-				owner = @listener.current_owner
-				location = node.location
-				arguments = node.arguments&.arguments
+		# ruby-lsp 0.27 replaced RubyIndexer with Rubydex, which has no Enhancement API.
+		if defined?(::RubyIndexer::Enhancement)
+			class IndexingEnhancement < RubyIndexer::Enhancement
+				def on_call_node_enter(node)
+					name = node.name
+					owner = @listener.current_owner
+					location = node.location
+					arguments = node.arguments&.arguments
 
-				return unless owner
-				return unless name in :register_output_helper | :register_value_helper
+					return unless owner
+					return unless name in :register_output_helper | :register_value_helper
 
-				case arguments
-				in [Prism::SymbolNode[unescaped: String => method_name], *]
-					@listener.add_method(method_name, location, [
-						RubyIndexer::Entry::Signature.new([
-							RubyIndexer::Entry::ForwardingParameter.new,
-						]),
-					], visibility: :public)
-				else
-					# no-op
+					case arguments
+					in [Prism::SymbolNode[unescaped: String => method_name], *]
+						@listener.add_method(method_name, location, [
+							RubyIndexer::Entry::Signature.new([
+								RubyIndexer::Entry::ForwardingParameter.new,
+							]),
+						], visibility: :public)
+					else
+						# no-op
+					end
 				end
 			end
 		end
