@@ -257,7 +257,7 @@ class CompilerTest < Quickdraw::Test
 		end
 	end
 
-	test "phlex:explain lists what each component leaves to the runtime" do
+	test "phlex:compiler:explain lists what each component leaves to the runtime" do
 		files = {
 			"app/components/card.rb" => CARD,
 			"app/components/legacy.rb" => <<~RUBY,
@@ -281,31 +281,31 @@ class CompilerTest < Quickdraw::Test
 		}
 
 		with_app(files:) do |root|
-			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:explain"), <<~TEXT
+			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:compiler:explain"), <<~TEXT
 				app/components/legacy.rb:3: Legacy says compile false, so it and its subclasses render uncompiled
 				app/components/splatted.rb:6: div's attributes are serialised together because a key is splatted or isn't a literal
 			TEXT
 		end
 	end
 
-	test "phlex:explain says when everything compiles" do
+	test "phlex:compiler:explain says when everything compiles" do
 		with_app do |root|
-			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:explain"), <<~TEXT
+			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:compiler:explain"), <<~TEXT
 				Every component compiles in full.
 			TEXT
 		end
 	end
 
-	test "phlex:source shows the Ruby a component compiles to" do
+	test "phlex:compiler:source shows the Ruby a component compiles to" do
 		with_app do |root|
-			output = run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:source[Card]")
+			output = run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:compiler:source[Card]")
 
 			assert output.start_with?("# -*- coding: UTF-8; frozen_string_literal: true -*-\n# app/components/card.rb\nclass Card\n")
 			assert output.include?("<div>card</div>")
 		end
 	end
 
-	test "phlex:source says when a component has nothing to compile" do
+	test "phlex:compiler:source says when a component has nothing to compile" do
 		files = {
 			"app/components/plain.rb" => <<~RUBY,
 				# frozen_string_literal: true
@@ -317,7 +317,7 @@ class CompilerTest < Quickdraw::Test
 		}
 
 		with_app(files:) do |root|
-			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:source[Plain]"), "Plain has nothing to compile.\n"
+			assert_equal run_in(root, "-e", "require 'rake'; Rake.application.run(ARGV)", "phlex:compiler:source[Plain]"), "Plain has nothing to compile.\n"
 		end
 	end
 end
