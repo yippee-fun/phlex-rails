@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require "ruby_lsp/addon"
+require_relative "definition"
 
 module RubyLsp
 	module PhlexRails
 		class Addon < ::RubyLsp::Addon
 			def activate(global_state, message_queue)
+				@global_state = global_state
 			end
 
 			def deactivate
@@ -17,6 +19,15 @@ module RubyLsp
 
 			def version
 				"0.1.0"
+			end
+
+			def create_definition_listener(response_builder, uri, node_context, dispatcher)
+				Definition.new(response_builder, index, @global_state.workspace_path, node_context, dispatcher)
+			end
+
+			# ruby-lsp 0.27 replaced RubyIndexer with Rubydex, so features that need the index are off there.
+			private def index
+				@global_state.index if defined?(::RubyIndexer::Index)
 			end
 		end
 
