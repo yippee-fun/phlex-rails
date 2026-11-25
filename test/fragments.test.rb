@@ -12,4 +12,49 @@ class FragmentsTest < Quickdraw::Test
 			</div>
 		HTML
 	end
+
+	test "rendering fragments as a renderable" do
+		assert_equivalent_html render(Views::Posts::Index.new.fragments("post_2")), <<~HTML.strip
+			<div id="post_2">
+				<h1>Post 2</h1>
+				<p>This is the second post.</p>
+			</div>
+		HTML
+	end
+
+	test "rendering several fragments as a renderable" do
+		assert_equivalent_html render(Views::Posts::Index.new.fragments(:post_1, "post_2")), <<~HTML.strip
+			<div id="post_1">
+				<h1>Post 1</h1>
+				<p>This is the first post.</p>
+			</div>
+			<div id="post_2">
+				<h1>Post 2</h1>
+				<p>This is the second post.</p>
+			</div>
+		HTML
+	end
+
+	test "rendering fragments from inside a component" do
+		component = Class.new(Phlex::HTML) do
+			define_method :view_template do
+				main { render Views::Posts::Index.new.fragments("post_1") }
+			end
+		end
+
+		assert_equivalent_html render(component), <<~HTML.strip
+			<main>
+				<div id="post_1">
+					<h1>Post 1</h1>
+					<p>This is the first post.</p>
+				</div>
+			</main>
+		HTML
+	end
+
+	test "fragments requires at least one name" do
+		assert_raises(Phlex::ArgumentError) do
+			Views::Posts::Index.new.fragments
+		end
+	end
 end
